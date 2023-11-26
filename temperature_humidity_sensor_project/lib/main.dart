@@ -1,12 +1,13 @@
-import 'dart:async';
 import 'package:dart_vader/dart_vader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:temperature_humidity_sensor_project/sensor.dart';
-import 'package:temperature_humidity_sensor_project/widgets.dart';
+import 'package:temperature_humidity_sensor_project/colors.dart';
+import 'package:temperature_humidity_sensor_project/service/ble_service.dart';
+import 'package:temperature_humidity_sensor_project/service/ble_service_interface.dart';
+import 'package:temperature_humidity_sensor_project/view/sensor.dart';
+import 'package:temperature_humidity_sensor_project/view/widgets.dart';
 
 void main() {
   runApp(FlutterBlueApp());
@@ -86,95 +87,99 @@ class _BluetoothOffScreenState extends State<BluetoothOffScreen> {
 }
 
 class FindDevicesScreen extends StatefulWidget {
+  const FindDevicesScreen({super.key});
+
   @override
   State<FindDevicesScreen> createState() => _FindDevicesScreenState();
 }
 
 class _FindDevicesScreenState extends State<FindDevicesScreen> {
+  final IBLEService _bleService = BLEService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _appBar(),
-      body: Column(
-        children: <Widget>[
-          StreamBuilder<List<BluetoothDevice>>(
-            stream: Stream.periodic(const Duration(seconds: 2)).asyncMap((_) => FlutterBluePlus.connectedDevices),
-            initialData: [],
-            builder: (c, snapshot) => Column(
-              children: snapshot.data != null
-                  ? snapshot.data!
-                      .map((d) => ListTile(
-                            title: Text(d.platformName, style: GoogleFonts.roboto(color: Colors.red)),
-                            subtitle: Text(d.toString()),
-                            trailing: StreamBuilder<BluetoothConnectionState>(
-                              stream: d.connectionState,
-                              initialData: BluetoothConnectionState.disconnected,
-                              builder: (c, snapshot) {
-                                if (snapshot.data == BluetoothConnectionState.connected) {}
-                                return Text(snapshot.data.toString());
-                              },
-                            ),
-                          ))
-                      .toList()
-                  : [
-                      Text(
-                        'data',
-                        style: TextStyle(color: Colors.red),
-                      )
-                    ],
-            ),
-          ),
-          StreamBuilder<List<ScanResult>>(
-            stream: FlutterBluePlus.scanResults,
-            initialData: [],
-            builder: (c, snapshot) => Column(
-              children: snapshot.data!
-                  .map(
-                    (r) => ScanResultTile(
-                      result: r,
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) {
-                        r.device.connect();
-                        return SensorPage(device: r.device);
-                      })),
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-        ],
+      body: StreamBuilder<List<ScanResult>>(
+        stream: BLEService.scanResults,
+        initialData: const [],
+        builder: (c, snapshot) => Column(
+          children: [
+            Expanded(flex: 3, child: Lottie.asset('assets/bluetooth_scan.json')),
+            Divider(thickness: 2, color: AppColors.black),
+            Expanded(flex: 1, child: _scannedDeviceText()),
+            Divider(thickness: 2, color: AppColors.black),
+            Expanded(flex: 5, child: _deviceListViewBuilder(snapshot, context)),
+          ],
+        ),
       ),
       floatingActionButton: StreamBuilder<bool>(
-        stream: FlutterBluePlus.isScanning,
+        stream: BLEService.isScaning,
         initialData: false,
         builder: (c, snapshot) {
           if (snapshot.data!) {
-            return FloatingActionButton(
-              onPressed: () => FlutterBluePlus.stopScan(),
-              backgroundColor: Colors.red,
-              child: const Icon(Icons.stop),
-            );
+            return _stopScanFAB();
           } else {
-            return FloatingActionButton(
-                child: const Icon(Icons.search),
-                onPressed: () async {
-                  var status = await Permission.bluetoothScan.status;
-                  if (status.isDenied) {
-                    await Permission.bluetoothScan.request();
-                  } else if (await Permission.bluetoothScan.status.isPermanentlyDenied) {
-                    openAppSettings();
-                  } else {
-                    FlutterBluePlus.startScan(timeout: const Duration(seconds: 4));
-                  }
-                });
+            return _startScanFAB();
           }
         },
       ),
     );
   }
 
+  Widget _scannedDeviceText() => Padding(
+        padding: context.symmetricPaddingHigh,
+        child: FittedBox(
+          child: Text('Scanned Device',
+              style: context.bodyLarge?.copyWith(
+                fontWeight: context.fontWeight300,
+              )),
+        ),
+      );
+
+  Widget _deviceListViewBuilder(AsyncSnapshot<List<ScanResult>> snapshot, BuildContext context) {
+    return ListView.builder(
+      itemCount: snapshot.data!.length,
+      itemBuilder: (c, index) => ScanResultTile(
+        result: snapshot.data![index],
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+          snapshot.data![index].device.connect();
+          return SensorPage(device: snapshot.data![index].device);
+        })),
+      ),
+    );
+  }
+
+  Widget _startScanFAB() {
+    return FloatingActionButton.large(
+        backgroundColor: AppColors.mainColor,
+        onPressed: () async {
+          var status = await Permission.bluetoothScan.status;
+          if (status.isDenied) {
+            await Permission.bluetoothScan.request();
+          } else if (await Permission.bluetoothScan.status.isPermanentlyDenied) {
+            openAppSettings();
+          } else {
+            _bleService.startScan(timeout: const Duration(seconds: 4));
+          }
+        },
+        child: Icon(
+          Icons.search,
+          color: AppColors.white,
+        ));
+  }
+
+  FloatingActionButton _stopScanFAB() {
+    return FloatingActionButton.large(
+      onPressed: () => _bleService.stopScan(),
+      backgroundColor: Colors.red,
+      child: Icon(Icons.stop, color: AppColors.white),
+    );
+  }
+
   AppBar _appBar() {
     return AppBar(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: AppColors.mainColor,
       title: FittedBox(
         child: Text(
           'Temperature & Humidity Checker',

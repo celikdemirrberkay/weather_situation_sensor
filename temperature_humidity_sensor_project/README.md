@@ -1,16 +1,11 @@
-# temperature_humidity_sensor_project
+# Weather App With Flutter
 
-A new Flutter project.
+A mechanism established to quickly measure the humidity and temperature in the environment.
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
+## Components
 
-A few resources to get you started if this is your first Flutter project:
+- ESP32 (For BLE)
+- DHT 11 (Temperature and Humidity Sensor)
+- Android Device
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
