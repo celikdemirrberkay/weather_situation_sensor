@@ -22,6 +22,5 @@ University project that measures temperature-humidity information with ESP32 and
 - Android Device
  
 
-![esp32_dh11](https://github.com/celikdemirrberkay/weather_situation_sensor/assets/77506090/1d0a4ca4-978b-42df-9d33-cfdf2a117c73)
+![esp32_dh11 (1)](https://github.com/celikdemirrberkay/weather_situation_sensor/assets/77506090/797411e7-eb24-4a83-b1a2-7d185d6bbe0a)
 
-![weather_system](https://github.com/celikdemirrberkay/weather_situation_sensor/assets/77506090/396789a2-5749-41d3-bf84-b7b0d7eb8841)
