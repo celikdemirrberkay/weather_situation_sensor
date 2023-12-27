@@ -24,3 +24,6 @@ University project that measures temperature-humidity information with ESP32 and
 
 ![esp32_dh11 (1)](https://github.com/celikdemirrberkay/weather_situation_sensor/assets/77506090/797411e7-eb24-4a83-b1a2-7d185d6bbe0a)
 
+![weather_system (1)](https://github.com/celikdemirrberkay/weather_situation_sensor/assets/77506090/bae2a86c-41b4-43ec-b681-fe0cec420b9c)
+
+
